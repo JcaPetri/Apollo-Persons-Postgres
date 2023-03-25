@@ -1,0 +1,252 @@
+-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+-- Create the PrnAddresses_Tbl table
+-- Contains the addresses of the persons module.
+-- One Persons_Tbl or BusinessTrade_Tbl can have multiple addresses (Legal/Real/ etc.)
+-- The information of the meaning all AddressIDn are in the AddressesDB.
+-- The unique key: is the AddressOwnerIDn + AddressTypeIDn fields and must be unique.
+-- the AddressOwnerIDn can be from the Persons_Tbl or BusinessTrade_Tbl
+-- each OwnerIDn can have one address type.
+
+-- #########################################################################################################################################################################################
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- First create the sequence PrnAddresses_seq
+-- 
+DROP SEQUENCE IF EXISTS public."PrnAddresses_Seq" CASCADE;
+
+CREATE SEQUENCE public."PrnAddresses_Seq"
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE public."PrnAddresses_Seq"
+    OWNER TO postgres;
+
+COMMENT ON SEQUENCE public."PrnAddresses_Seq"
+    IS 'The sequence PrnAddresses_Tbl_seq generate the nextval of the IDNum';
+
+-- #########################################################################################################################################################################################
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Second create the PrnAddresses_Tbl table
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Table: public.PrnAddresses_Tbl
+DROP TABLE IF EXISTS public."PrnAddresses_Tbl" CASCADE;
+
+CREATE TABLE IF NOT EXISTS public."PrnAddresses_Tbl"
+(
+    "IDNum" integer NOT NULL DEFAULT nextval('"PrnAddresses_Seq"'::regclass),
+    "ID" uuid NOT NULL DEFAULT uuid_generate_v4 (),
+    "AddressOwnerIDn" integer NOT NULL,
+    "AddressTypeIDn" integer NOT NULL,
+    "CountryIDn" integer NOT NULL,
+    "CityIDn" integer NOT NULL,
+    "AddressIDn" integer NOT NULL,
+    "ZipCodeIDn" integer NOT NULL,
+    "Address" character varying(250) NOT NULL,
+    "GoogleMaps" character varying(250) NOT NULL,
+    "StateIDn" smallint NOT NULL,
+    "CreatedByIDn" integer NOT NULL,
+    "LastModifiedByIDn" integer NOT NULL,
+    "OwnerIDn" integer NOT NULL,
+    "DateCreated" timestamp with time zone NOT NULL,
+    "DateTimeStamp" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "TableHistory" text COLLATE pg_catalog."default",
+    CONSTRAINT "PadPk_IDNum" PRIMARY KEY ("IDNum"),
+    CONSTRAINT "PadUnique_ID" UNIQUE ("ID"),
+    CONSTRAINT "PadUnique_IDnAddressOwnerType" UNIQUE ("AddressOwnerIDn", "AddressTypeIDn")
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public."PrnAddresses_Tbl"
+    OWNER to postgres;
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Create the comments of the table fields elements
+-- 
+COMMENT ON TABLE public."PrnAddresses_Tbl"
+    IS 'Contains the addresses of the persons module.
+One Persons_Tbl or BusinessTrade_Tbl can have multiple addresses (Legal/Real/ etc.)
+The information of the meaning all AddressIDn are in the AddressesDB.
+The unique key: is the AddressOwnerIDn + AddressTypeIDn fields and must be unique.
+the AddressOwnerIDn can be from the Persons_Tbl or BusinessTrade_Tbl
+each OwnerIDn can have one address type.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."IDNum"
+    IS 'The IDNum is the autoincrement number';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."ID"
+    IS 'The ID is the uniqueidentifier auto generated V4';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."AddressOwnerIDn"
+    IS 'The AddressOwnerIDn is the IDNum of the Persons_Tbl or BusinessTrades_Tbl.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."AddressTypeIDn"
+    IS 'The AddressTypeIDn is the Type of the address, it can be Legal, Real, Store, etc.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."CountryIDn"
+    IS 'The CountryIDn is the IDNum of the AddressOwner country.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."CityIDn"
+    IS 'The CityIDn is the IDNum of the AddressOwner city. This code has the relation with country.
+In each Country you have thiers own stept to the City, like States, Department, etc.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."AddressIDn"
+    IS 'The AddressIDn is the IDNum of the AddressOwner address. This code has the relation with City.
+In each City you have thiers own stept to the Address, like neighborhood, zone, etc.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."ZipCodeIDn"
+    IS 'The ZipCodeIDn is the IDNum of the AddressOwner zip code.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."Address"
+    IS 'The legal address of the AddressOwner, this is writte in the Owner Language.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."GoogleMaps"
+    IS 'The link of GoogleMaps address.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."StateIDn"
+    IS 'The StatedIDn is the IDNum that define if the record is enable or not.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."CreatedByIDn"
+    IS 'The CreatedByIDn is the IDNum of the user who created the record.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."LastModifiedByIDn"
+    IS 'The LastModifiedByIDn is the IDNum of the last user who modified the record.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."OwnerIDn"
+    IS 'The OwnerIDn is the IDNum of the record owner.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."DateCreated"
+    IS 'The DateCreated is the record creation datetime UTC.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."DateTimeStamp"
+    IS 'The DateTimeStamp is the datetime UTC of the last modification.';
+
+COMMENT ON COLUMN public."PrnAddresses_Tbl"."TableHistory"
+    IS 'The TableHistory contain then change history of each column.';
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Create the comments of the constraint elements
+-- 
+COMMENT ON CONSTRAINT "PadUnique_IDnAddressOwnerType" ON public."PrnAddresses_Tbl"
+    IS 'The Address Owner and the Address Type must be unique.';
+
+-- #########################################################################################################################################################################################
+-- Second create the trigger before insert
+--	Step 1: create the function before insert
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: public.PrnAddressBeforeInsert_Tfnc()
+DROP FUNCTION IF EXISTS public."PrnAddressBeforeInsert_Tfnc"() CASCADE;
+
+CREATE OR REPLACE FUNCTION public."PrnAddressBeforeInsert_Tfnc"()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+BEGIN
+	-- ------------------------------------------------------------------------------------------------------------------
+	-- Set the created date
+	IF NEW."DateCreated" IS NULL THEN 
+		NEW."DateCreated" := CURRENT_TIMESTAMP;
+	END IF;
+RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public."PrnAddressBeforeInsert_Tfnc"()
+    OWNER TO postgres;
+
+COMMENT ON FUNCTION public."PrnAddressBeforeInsert_Tfnc"()
+    IS 'Create the function to set de current timestamp for the datecreated field.
+	This funtion is used by the PrnAddresses_Tbl table before insert trigger.';
+
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--	Step 2: create the trigger before insert in the PrnAddress table
+-- Trigger: PrnAddressBeforeInsert_Trg
+DROP TRIGGER IF EXISTS "PrnAddressBeforeInsert_Trg" ON public."PrnAddresses_Tbl" CASCADE;
+
+CREATE TRIGGER "PrnAddressBeforeInsert_Trg"
+    BEFORE INSERT
+    ON public."PrnAddresses_Tbl"
+    FOR EACH ROW
+    EXECUTE FUNCTION public."PrnAddressBeforeInsert_Tfnc"();
+
+COMMENT ON TRIGGER "PrnAddressBeforeInsert_Trg" ON public."PrnAddresses_Tbl"
+    IS 'Set the datetime UTC of the DateCreated field';
+
+-- #########################################################################################################################################################################################
+-- Third create the trigger before update
+--	Step 1: create the function before update
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: public.PrnAddressBeforeUpdate_Tfnc()
+DROP FUNCTION IF EXISTS public."PrnAddressBeforeUpdate_Tfnc"() CASCADE;
+
+CREATE OR REPLACE FUNCTION public."PrnAddressBeforeUpdate_Tfnc"()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+DECLARE
+	v_TableHistory text;
+	v_TableHistoryOld text;
+BEGIN
+	-- ------------------------------------------------------------------------------------------------------------------
+	-- Set the DateTimeStamp
+	NEW."DateTimeStamp" := CURRENT_TIMESTAMP;
+	-- ------------------------------------------------------------------------------------------------------------------
+	-- Set the created date
+	IF NEW."TableHistory" = 'SetNull' THEN 
+		NEW."TableHistory" := NULL;
+	ELSEIF NEW."TableHistory" = 'SetOff' THEN
+		NEW."TableHistory" := OLD."TableHistory";
+	ELSE
+		v_TableHistoryOld := OLD."TableHistory";
+		v_TableHistory = '';
+		IF NEW."AddressOwnerIDn" <> OLD."AddressOwnerIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."AddressOwnerIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."AddressTypeIDn" <> OLD."AddressTypeIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."AddressTypeIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."CountryIDn" <> OLD."CountryIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."CountryIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."CityIDn" <> OLD."CityIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."CityIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."AddressIDn" <> OLD."AddressIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."AddressIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."ZipCodeIDn" <> OLD."ZipCodeIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."ZipCodeIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."Address" <> OLD."Address" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."Address"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."GoogleMaps" <> OLD."GoogleMaps" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."GoogleMaps"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."StateIDn" <> OLD."StateIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."StateIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."CreatedByIDn" <> OLD."CreatedByIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."CreatedByIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."LastModifiedByIDn" <> OLD."LastModifiedByIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."LastModifiedByIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."OwnerIDn" <> OLD."OwnerIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."OwnerIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF v_TableHistoryOld IS NULL THEN v_TableHistory := CONCAT(v_TableHistory,'†',NEW."DateCreated"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."DateTimeStamp" <> OLD."DateTimeStamp" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."DateTimeStamp"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF v_TableHistoryOld IS NULL THEN
+			NEW."TableHistory" := v_TableHistory;
+		ELSE
+			NEW."TableHistory" := CONCAT(v_TableHistory,'‡',v_TableHistoryOld);
+		END IF;
+		
+	END IF;
+	RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public."PrnAddressBeforeUpdate_Tfnc"()
+    OWNER TO postgres;
+
+COMMENT ON FUNCTION public."PrnAddressBeforeUpdate_Tfnc"()
+    IS 'Create the function to set the new datetimestamp and the history of the record.
+	This funtion is used by the PrnAddresses_Tbl table before update trigger.';
+
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--	Step 2: create the trigger before update in the PrnAddress table
+-- Trigger: PrnAddressBeforeUpdate_Trg
+DROP TRIGGER IF EXISTS "PrnAddressBeforeUpdate_Trg" ON public."PrnAddresses_Tbl" CASCADE;
+
+CREATE TRIGGER "PrnAddressBeforeUpdate_Trg"
+    BEFORE UPDATE 
+    ON public."PrnAddresses_Tbl"
+    FOR EACH ROW
+    EXECUTE FUNCTION public."PrnAddressBeforeUpdate_Tfnc"();
+
+COMMENT ON TRIGGER "PrnAddressBeforeUpdate_Trg" ON public."PrnAddresses_Tbl"
+    IS 'Set the datetime UTC and the record History.';
