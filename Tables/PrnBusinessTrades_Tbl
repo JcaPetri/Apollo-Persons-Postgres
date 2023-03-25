@@ -1,0 +1,206 @@
+-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+-- Create the PrnBusinessTrades_Tbl table
+-- Contains the Business Trade information. 
+-- The Business Trade exists since you create them in this table. 
+-- It`s information, of what are they, are in the PrnBaseElement_Tbl.
+-- The BusinessTrade is the real Client/Supplier of the BusinessUnit. One BusinessTrade can have many Persons. They are the real individual or legal entity.
+-- The unique key: is the BusinessTradeIDn + BusinessUnitIDn fields and must be unique.
+
+-- #########################################################################################################################################################################################
+-- First create the Table
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Table: public.PrnBusinessTrades_Tbl
+DROP TABLE IF EXISTS public."PrnBusinessTrades_Tbl" CASCADE;
+
+CREATE TABLE IF NOT EXISTS public."PrnBusinessTrades_Tbl"
+(
+    "BusinessTradeIDn" integer NOT NULL,
+    "BusinessUnitIDn" integer NOT NULL,
+    "DateFrom" timestamp with time zone NOT NULL,
+    "DateTo" timestamp with time zone NOT NULL,
+    "StateIDn" smallint NOT NULL,
+    "CreatedByIDn" integer NOT NULL,
+    "LastModifiedByIDn" integer NOT NULL,
+    "OwnerIDn" integer NOT NULL,
+    "DateCreated" timestamp with time zone NOT NULL,
+    "DateTimeStamp" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "TableHistory" text COLLATE pg_catalog."default",
+    CONSTRAINT "PbtPk_BusinessTrade" PRIMARY KEY ("BusinessTradeIDn"),
+    CONSTRAINT "PbtUnique_IDnBusinessTradeBusinessUnit" UNIQUE ("BusinessTradeIDn", "BusinessUnitIDn")
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public."PrnBusinessTrades_Tbl"
+    OWNER to postgres;
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Create the comments of the table fields elements
+-- 
+COMMENT ON TABLE public."PrnBusinessTrades_Tbl"
+    IS 'Contains the Business Trade information. 
+The Business Trade exists since you create them in this table. 
+It`s information, of what are they, are in the PrnBaseElement_Tbl.
+The BusinessTrade is the real Client/Supplier of the BusinessUnit. One BusinessTrade can have many Persons. They are the real individual or legal entity.
+The unique key: is the BusinessTradeIDn + BusinessUnitIDn fields and must be unique.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."BusinessTradeIDn"
+    IS 'The BusinessTrade is the Business Trade. This is the real Client/Supplier of the BusinessUnit.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."BusinessUnitIDn"
+    IS 'The BusinessUnitIDn is the business unit that the Business Trade belong. Link with the SysBusinessUnit_Tbl.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."DateFrom"
+    IS 'The Date From set when the BusinessTrade start to work with the BusinessUnit effective.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."DateTo"
+    IS 'The Date From set when the BusinessTrade end to work with the BusinessUnit effective. 
+If it is null, the value is set to 31/12/3000';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."StateIDn"
+    IS 'The StatedIDn is the IDNum that define if the record is enable or not.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."CreatedByIDn"
+    IS 'The CreatedByIDn is the IDNum of the user who created the record.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."LastModifiedByIDn"
+    IS 'The LastModifiedByIDn is the IDNum of the last user who modified the record.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."OwnerIDn"
+    IS 'The OwnerIDn is the IDNum of the record owner.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."DateCreated"
+    IS 'The DateCreated is the record creation datetime UTC.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."DateTimeStamp"
+    IS 'The DateTimeStamp is the datetime UTC of the last modification.';
+
+COMMENT ON COLUMN public."PrnBusinessTrades_Tbl"."TableHistory"
+    IS 'The TableHistory contain then change history of each column.';
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Create the comments of the constraint elements
+-- 
+COMMENT ON CONSTRAINT "PbtPk_BusinessTrade" ON public."PrnBusinessTrades_Tbl"
+    IS 'The PbtPk_BusinessTrade came from the SysBaseElement_Tbl, thats is a integer generated value.';
+
+COMMENT ON CONSTRAINT "PbtUnique_IDnBusinessTradeBusinessUnit" ON public."PrnBusinessTrades_Tbl"
+    IS 'The BusinessTrade is unique for a BusinessUnit.';
+
+-- #########################################################################################################################################################################################
+-- Second create the trigger before insert
+--	Step 1: create the function before insert
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: public.PrnBusinessTradesBeforeInsert_Tfnc()
+DROP FUNCTION IF EXISTS public."PrnBusinessTradesBeforeInsert_Tfnc"() CASCADE;
+
+CREATE OR REPLACE FUNCTION public."PrnBusinessTradesBeforeInsert_Tfnc"()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+BEGIN
+	-- ------------------------------------------------------------------------------------------------------------------
+	-- Set the created date
+	IF NEW."DateCreated" IS NULL THEN 
+		NEW."DateCreated" := CURRENT_TIMESTAMP;
+	END IF;
+	IF NEW."DateTo" IS NULL THEN 
+		NEW."DateTo" := '2999-12-31 20:59:59'::timestamp AT TIME ZONE 'CST';
+	END IF;
+RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public."PrnBusinessTradesBeforeInsert_Tfnc"()
+    OWNER TO postgres;
+
+COMMENT ON FUNCTION public."PrnBusinessTradesBeforeInsert_Tfnc"()
+    IS 'Create the function to set de current timestamp for the datecreated field.
+	This funtion is used by the PrnBusinessTrades_Tbl table before insert trigger.';
+
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--	Step 2: create the trigger before insert in the PrnBusinessTrades table
+-- Trigger: PrnBusinessTradesBeforeInsert_Trg
+DROP TRIGGER IF EXISTS "PrnBusinessTradesBeforeInsert_Trg" ON public."PrnBusinessTrades_Tbl" CASCADE;
+
+CREATE TRIGGER "PrnBusinessTradesBeforeInsert_Trg"
+    BEFORE INSERT
+    ON public."PrnBusinessTrades_Tbl"
+    FOR EACH ROW
+    EXECUTE FUNCTION public."PrnBusinessTradesBeforeInsert_Tfnc"();
+
+COMMENT ON TRIGGER "PrnBusinessTradesBeforeInsert_Trg" ON public."PrnBusinessTrades_Tbl"
+    IS 'Set the datetime UTC of the DateCreated field';
+
+-- #########################################################################################################################################################################################
+-- Third create the trigger before update
+--	Step 1: create the function before update
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: public.PrnBusinessTradesBeforeUpdate_Tfnc()
+DROP FUNCTION IF EXISTS public."PrnBusinessTradesBeforeUpdate_Tfnc"() CASCADE;
+
+CREATE OR REPLACE FUNCTION public."PrnBusinessTradesBeforeUpdate_Tfnc"()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+DECLARE
+	v_TableHistory text;
+	v_TableHistoryOld text;
+BEGIN
+	-- ------------------------------------------------------------------------------------------------------------------
+	-- Set the DateTimeStamp
+	NEW."DateTimeStamp" := CURRENT_TIMESTAMP;
+	-- ------------------------------------------------------------------------------------------------------------------
+	-- Set the created date
+	IF NEW."TableHistory" = 'SetNull' THEN 
+		NEW."TableHistory" := NULL;
+	ELSEIF NEW."TableHistory" = 'SetOff' THEN
+		NEW."TableHistory" := OLD."TableHistory";
+	ELSE
+		v_TableHistoryOld := OLD."TableHistory";
+		v_TableHistory = '';
+		IF NEW."BusinessTradeIDn" <> OLD."BusinessTradeIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."BusinessTradeIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."BusinessUnitIDn" <> OLD."BusinessUnitIDn" THEN v_TableHistory := OLD."BusinessUnitIDn"; ELSE v_TableHistory := '†'; END IF;
+		IF NEW."DateFrom" <> OLD."DateFrom" THEN v_TableHistory := OLD."DateFrom"; ELSE v_TableHistory := '†'; END IF;
+		IF NEW."DateTo" <> OLD."DateTo" THEN v_TableHistory := OLD."DateTo"; ELSE v_TableHistory := '†'; END IF;
+		IF NEW."StateIDn" <> OLD."StateIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."StateIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."CreatedByIDn" <> OLD."CreatedByIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."CreatedByIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."LastModifiedByIDn" <> OLD."LastModifiedByIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."LastModifiedByIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."OwnerIDn" <> OLD."OwnerIDn" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."OwnerIDn"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF v_TableHistoryOld IS NULL THEN v_TableHistory := CONCAT(v_TableHistory,'†',NEW."DateCreated"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF NEW."DateTimeStamp" <> OLD."DateTimeStamp" THEN v_TableHistory := CONCAT(v_TableHistory,'†',OLD."DateTimeStamp"); ELSE v_TableHistory := CONCAT(v_TableHistory,'†'); END IF;
+		IF v_TableHistoryOld IS NULL THEN
+			NEW."TableHistory" := v_TableHistory;
+		ELSE
+			NEW."TableHistory" := CONCAT(v_TableHistory,'‡',v_TableHistoryOld);
+		END IF;
+		
+	END IF;
+	RETURN NEW;
+END;
+$BODY$;
+
+ALTER FUNCTION public."PrnBusinessTradesBeforeUpdate_Tfnc"()
+    OWNER TO postgres;
+
+COMMENT ON FUNCTION public."PrnBusinessTradesBeforeUpdate_Tfnc"()
+    IS 'Create the function to set the new datetimestamp and the history of the record.
+	This funtion is used by the PrnBusinessTrades_Tbl table before update trigger.';
+
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--	Step 2: create the trigger before update in the PrnBusinessTrades table
+-- Trigger: PrnBusinessTradesBeforeUpdate_Trg
+DROP TRIGGER IF EXISTS "PrnBusinessTradesBeforeUpdate_Trg" ON public."PrnBusinessTrades_Tbl" CASCADE;
+
+CREATE TRIGGER "PrnBusinessTradesBeforeUpdate_Trg"
+    BEFORE UPDATE 
+    ON public."PrnBusinessTrades_Tbl"
+    FOR EACH ROW
+    EXECUTE FUNCTION public."PrnBusinessTradesBeforeUpdate_Tfnc"();
+
+COMMENT ON TRIGGER "PrnBusinessTradesBeforeUpdate_Trg" ON public."PrnBusinessTrades_Tbl"
+    IS 'Set the datetime UTC and the record History.';
